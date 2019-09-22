@@ -1,0 +1,9 @@
+---
+
+aws_region: us-east-1
+keypair: MyKeyPair
+instance_size: t2.micro
+linux_ami_id: ami-123456
+windows_ami_id: ami-123456
+security_group_id: sg-123456
+subnet_id: subnet-123456

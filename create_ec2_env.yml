@@ -1,0 +1,111 @@
+---
+# This playbook provisions an environment to start experimenting with Ansible on AWS
+
+- name: Generate Ansible Controller Machines
+  ec2:
+    region: "{{ aws_region }}"
+    key_name: "{{ keypair }}"
+    instance_type: "{{ instance_size }}"
+    image: "{{ linux_ami_id }}"
+    wait: yes
+    group_id: "{{ security_group_id }}"
+    count: 1
+    vpc_subnet_id: "{{ subnet_id }}"
+    assign_public_ip: "yes"
+    instance_tags:
+      Name: "[{{ dev }}] Ansible Controller"
+      Dev: "[{{ dev }}]"
+      Role: "AnsibleWorkshop"
+    user_data: |
+      #!/bin/bash
+      sudo yum install -y git
+      sudo curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+      sudo python get-pip.py
+      sudo pip install ansible pywinrm[credssp] requests-credssp --ignore-installed
+      git clone https://github.com/avishayil/ansible-workshop /home/ec2-user/ansible-workshop
+  register: ec2_instances
+
+- name: associate new elastic IPs with each of the instances
+  ec2_eip:
+    region: "{{ aws_region }}"
+    device_id: "{{ ec2_instances.instance_ids[0] }}"
+  register: eip
+
+- name: Add To Hosts
+  add_host:
+    hostname: "{{ eip.public_ip }}"
+    group: linux
+
+- name: Add IP to text file
+  lineinfile:
+    path: "outputs/{{ dev }}.txt"
+    line: "Ansible Controller: {{ eip.public_ip }}"
+    create: yes
+
+- name: Generate Linux Hosts
+  ec2:
+    key_name: "{{ keypair }}"
+    instance_type: "{{ instance_size }}"
+    image: "{{ windows_ami_id }}"
+    wait: yes
+    group_id: "{{ security_group_id }}"
+    count: 1
+    vpc_subnet_id: "{{ subnet_id }}"
+    assign_public_ip: "yes"
+    region: "{{ aws_region }}"
+    instance_tags:
+      Name: "[{{ dev }}] Linux Host"
+      Dev: "[{{ dev }}]"
+      Role: "AnsibleWorkshop"
+  register: ec2_instances
+
+- name: Add To Hosts
+  add_host:
+    hostname: "{{ ec2_instances.instances[0].private_ip }}"
+    group: linux
+
+- name: Add IP to text file
+  lineinfile:
+    path: "outputs/{{ dev }}.txt"
+    line: "Linux Host: {{ ec2_instances.instances[0].private_ip }}"
+    create: yes
+
+- name: Generate Windows Hosts
+  ec2:
+    key_name: "MyKeyPair"
+    instance_type: "t2.micro"
+    image: "{{ windows_ami_id }}"
+    wait: yes
+    group_id: "{{ security_group_id }}"
+    count: 1
+    vpc_subnet_id: "{{ subnet_id }}"
+    assign_public_ip: "yes"
+    region: "{{ aws_region }}"
+    instance_tags:
+      Name: "[{{ dev }}] Windows Host"
+      Dev: "[{{ dev }}]"
+      Role: "AnsibleWorkshop"
+    user_data: |
+       <powershell>
+        # Change Password
+        $admin = [adsi]("WinNT://./administrator, user")
+        $admin.PSBase.Invoke("SetPassword", "{{ ansible_password }}")
+
+        # Configure machine for ansible remoting
+        $url = "https://raw.githubusercontent.com/ansible/ansible/devel/examples/scripts/ConfigureRemotingForAnsible.ps1"
+        $file = "$env:temp\ConfigureRemotingForAnsible.ps1"
+        (New-Object -TypeName System.Net.WebClient).DownloadFile($url, $file)
+        powershell.exe -ExecutionPolicy ByPass -File $file -EnableCredSSP
+        </powershell>
+  register: ec2_instances
+
+- name: Add To Hosts
+  add_host:
+    hostname: "{{ ec2_instances.instances[0].private_ip }}"
+    group: windows
+
+- name: Add IP to text file
+  lineinfile:
+    path: "outputs/{{ dev }}.txt"
+    line: "Windows Host: {{ ec2_instances.instances[0].private_ip }}"
+    create: yes
