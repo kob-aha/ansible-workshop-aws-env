@@ -9,6 +9,7 @@ This is an Ansible playbook that provisions an environment on AWS for doing the 
 - Download the KeyPair to your computer, to the same directory as this repository you just cloned
 - SSH to this EC2 instance and install Ansible using `sudo pip install ansible pywinrm[credssp] requests-credssp --ignore-installed` 
 - Fill the correct variables inside the file `host_vars/localhost` regarding your AWS environment
+- Alter the `playbook.yml` file and change this line: `loop: "{{ query('sequence', 'start=1 end=20') }}"` according to the number of environment required.
 
 ### Running the Playbook
 
