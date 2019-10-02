@@ -1,9 +1,18 @@
 ---
 
-aws_region: us-east-1
-keypair: MyKeyPair
+aws_region: us-west-1
 instance_size: t2.micro
-linux_ami_id: ami-123456
-windows_ami_id: ami-123456
-security_group_id: sg-123456
-subnet_id: subnet-123456
+
+# Ubuntu Server 18.04 LTS (HVM), SSD Volume Type
+#linux_ami_id: ami-08fd8ae3806f09a08
+
+# Red Hat Enterprise Linux 8 (HVM)
+linux_ami_id: ami-00fc224d9834053d6
+
+# Microsoft Windows Server 2019 Base
+windows_ami_id: ami-0f822e92f3218a4ff
+security_group_id: sg-0bc631949635851f7
+subnet_id: subnet-015a5daa507434c75
+#security_group_id: sg-0ea408f811f41aaea
+#subnet_id: subnet-01bd6e06f27bf8ca1
+

@@ -30,23 +30,26 @@
     region: "{{ aws_region }}"
     device_id: "{{ ec2_instances.instance_ids[0] }}"
   register: eip
+  when: remove_instance_ids is undefined
 
 - name: Add To Hosts
   add_host:
     hostname: "{{ eip.public_ip }}"
     group: linux
+  when: remove_instance_ids is undefined
 
 - name: Add IP to text file
   lineinfile:
     path: "outputs/{{ dev }}.txt"
     line: "Ansible Controller: {{ eip.public_ip }}"
     create: yes
+  when: remove_instance_ids is undefined
 
 - name: Generate Linux Hosts
   ec2:
     key_name: "{{ keypair }}"
     instance_type: "{{ instance_size }}"
-    image: "{{ windows_ami_id }}"
+    image: "{{ linux_ami_id }}"
     wait: yes
     group_id: "{{ security_group_id }}"
     count: 1
@@ -63,16 +66,18 @@
   add_host:
     hostname: "{{ ec2_instances.instances[0].private_ip }}"
     group: linux
+  when: remove_instance_ids is undefined
 
 - name: Add IP to text file
   lineinfile:
     path: "outputs/{{ dev }}.txt"
     line: "Linux Host: {{ ec2_instances.instances[0].private_ip }}"
     create: yes
+  when: remove_instance_ids is undefined
 
 - name: Generate Windows Hosts
   ec2:
-    key_name: "MyKeyPair"
+    key_name: "{{ keypair }}"
     instance_type: "t2.micro"
     image: "{{ windows_ami_id }}"
     wait: yes
@@ -103,9 +108,11 @@
   add_host:
     hostname: "{{ ec2_instances.instances[0].private_ip }}"
     group: windows
+  when: remove_instance_ids is undefined
 
 - name: Add IP to text file
   lineinfile:
     path: "outputs/{{ dev }}.txt"
     line: "Windows Host: {{ ec2_instances.instances[0].private_ip }}"
     create: yes
+  when: remove_instance_ids is undefined

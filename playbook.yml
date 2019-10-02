@@ -6,9 +6,17 @@
   gather_facts: no
   tasks:
 
+    - name: Remove Created Machines
+      ec2:
+        region: "{{ aws_region }}"
+        state: absent
+        instance_ids: "{{ remove_instance_ids }}"
+      when: remove_instance_ids is defined 
+
     - name: Create EC2 Environment Loop
       include: "create_ec2_env.yml dev=Dev{{ item }}"
-      loop: "{{ query('sequence', 'start=1 end=20') }}"
+      loop: "{{ query('sequence', 'start=1 end=1') }}"
+      when: remove_instance_ids is undefined
 
 - hosts: linux
   gather_facts: no
@@ -21,6 +29,7 @@
   tasks:
     - name: Health Check Linux Machines
       wait_for_connection:
+      when: remove_instance_ids is undefined
 
 - hosts: windows
   gather_facts: no
@@ -33,3 +42,4 @@
   tasks:
     - name: Health Check Windows Machines
       wait_for_connection:
+      when: remove_instance_ids is undefined

@@ -1,0 +1,4 @@
+---
+
+keypair: ansible-training
+#state: present
