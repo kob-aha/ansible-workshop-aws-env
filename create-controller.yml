@@ -1,0 +1,39 @@
+---
+- hosts: localhost  # put localhost.  We are processing against aws
+  connection: local  # put local.  We are processing against aws
+  gather_facts: False  # don't gather facts against localhost
+  vars_files:
+    - aws_keys.yml
+  tasks:      
+  - name: Generate Ansible Controller Machines
+    ec2:
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      region: "{{ aws_region }}"
+      key_name: "{{ keypair }}"
+      instance_type: "{{ instance_size }}"
+      image: "{{ linux_ami_id }}"
+      wait: yes
+      group_id: "{{ security_group_id }}"
+      count: 1
+      vpc_subnet_id: "{{ subnet_id }}"
+      assign_public_ip: "yes"
+      instance_tags:
+        Name: "Ansible Workshop Env Setup Controller"        
+        Role: "AnsibleWorkshop"
+      user_data: |
+        #!/bin/bash
+        sudo yum install -y git
+        sudo curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+        sudo python get-pip.py
+        sudo pip install ansible pywinrm[credssp] requests-credssp --ignore-installed
+        git clone https://github.com/avishayil/ansible-workshop /home/ec2-user/ansible-workshop
+    register: ec2_instances
+
+  - name: associate new elastic IPs with each of the instances
+    ec2_eip:
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      region: "{{ aws_region }}"
+      device_id: "{{ ec2_instances.instance_ids[0] }}"
+    register: eip
