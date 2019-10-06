@@ -74,17 +74,21 @@
       tags:
         Name: "{{ security_group_name  }}"
       rules:
-      - proto: tcp
-        ports:
-        - 22
-        cidr_ip: "{{ sgInboundCidrBlock }}"
-        rule_desc: allow all on port 22
-        - 5985
-        cidr_ip: "{{ sgInboundCidrBlock }}"
-        rule_desc: allow all on WinRM HTTP port
-        - 5986
-        cidr_ip: "{{ sgInboundCidrBlock }}"
-        rule_desc: allow all on WinRM HTTPs port
+        - proto: tcp
+          ports:
+          - 22
+          cidr_ip: "{{ sgInboundCidrBlock }}"
+          rule_desc: allow all on port 22
+        - proto: tcp
+          ports:
+          - 5985
+          cidr_ip: "{{ sgInboundCidrBlock }}"
+          rule_desc: allow all on WinRM HTTP port
+        - proto: tcp
+          ports:
+          - 5986
+          cidr_ip: "{{ sgInboundCidrBlock }}"
+          rule_desc: allow all on WinRM HTTPs port
     register: security_group_results
   - name: create ec2 VPC Network access control list
     # create the access control list with ingress and egress ports 
